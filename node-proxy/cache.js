@@ -9,15 +9,17 @@ const pageUrl = "http://localhost:8000"
  *  Demo Server to run preprocessHTML()
  */
 const server = http.createServer((request, response) => {
-    if(request.url !== '/'){
-        fetch(pageUrl + request.url).then(response => response.text()).then((result)=>{
-            response.setHeader('cache-control','public, max-age=2592000')
-            response.write(result)
+    if (request.url !== '/') {
+        const assetVersion = getQueryParameter('v', request.url);
+        fetch(pageUrl + request.url).then(response => response.text()).then((result) => {
+            response.setHeader('eTag', assetVersion);
+            response.setHeader('cache-control', 'public, max-age=2592000');
+            response.write(result);
             response.end();
         })
         return;
     }
-    fetch(pageUrl).then(response => response.text()).then(result => preprocessHTML(result)).then((result)=>{
+    fetch(pageUrl).then(response => response.text()).then(result => preprocessHTML(result)).then((result) => {
         response.setHeader('x-version', headerVersion)
         response.write(result)
         response.end();
@@ -87,8 +89,8 @@ function getScriptFiles(htmlAsString, matches) {
  * @param url {string}
  * @returns {string}
  */
-function getQueryParameter(parameter , url) {
-    const expression = new RegExp( '[?&]' + parameter + '=([^&#]*)', 'i' );
+function getQueryParameter(parameter, url) {
+    const expression = new RegExp('[?&]' + parameter + '=([^&#]*)', 'i');
     const string = expression.exec(url);
     return string ? string[1] : '';
 }
@@ -112,6 +114,6 @@ async function createHashFromCombinedFileString(matches) {
         })
     })
 
-    return  md5(combinedAssetsAsString);
+    return md5(combinedAssetsAsString);
 }
 
