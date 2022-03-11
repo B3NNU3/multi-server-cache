@@ -94,6 +94,9 @@ function getQueryParameter(parameter , url) {
 }
 
 /**
+ * assets could be loaded in a different order. To be save here,
+ * they should be added to a map with url as key and be keySorted before joining together
+ *
  * @param matches {[string:string]}
  * @returns {Promise<*>}
  */
