@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "dev": "node cache.js"
+  },
+  "dependencies": {
+    "js-md5": "^0.7.3",
+    "node-fetch": "2.0"
+  }
+}

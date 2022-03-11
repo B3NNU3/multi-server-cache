@@ -1,0 +1,5 @@
+.idea
+node-proxy/node_modules
+php-app/vendor
+php-app/var
+
