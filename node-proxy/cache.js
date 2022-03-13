@@ -21,6 +21,7 @@ const server = http.createServer((request, response) => {
     }
     fetch(pageUrl).then(response => response.text()).then(result => preprocessHTML(result)).then((result) => {
         response.setHeader('x-version', headerVersion)
+        response.setHeader('x-assetLength', loadedAssetLength)
         response.write(result)
         response.end();
     })
@@ -34,11 +35,22 @@ server.listen((3000), () => {
  * @type {{string:string}}
  */
 const cacheMap = {};
+
+/**
+ * @type {{string:string}}
+ */
+const versionMap = {};
+
 /**
  * to show the real version as header
  * @type {{string:string}}
  */
 let headerVersion
+/**
+ * to debug the loaded size of assets to hash
+ * @type {number}
+ */
+let loadedAssetLength = 0
 
 /**
  * @param htmlAsString {string}
@@ -49,8 +61,9 @@ async function preprocessHTML(htmlAsString) {
     const matches = [];
     getStyleFiles(htmlAsString, matches);
     getScriptFiles(htmlAsString, matches);
-    const hash = await createHashFromCombinedFileString(matches);
     const currentVersion = getQueryParameter('v', matches[0]);
+
+    const hash = await getHash(currentVersion, matches);
     headerVersion = currentVersion
 
     if (cacheMap.hasOwnProperty(hash)) {
@@ -96,6 +109,25 @@ function getQueryParameter(parameter, url) {
 }
 
 /**
+ * load cached hash if possible
+ *
+ * @param currentVersion
+ * @param matches
+ * @returns {Promise<*>}
+ */
+async function getHash(currentVersion, matches) {
+    if (versionMap.hasOwnProperty(currentVersion)) {
+        loadedAssetLength = 0;
+
+        return versionMap[currentVersion];
+    }
+    const hash = await createHashFromCombinedFileString(matches);
+    versionMap[currentVersion] = hash;
+
+    return hash;
+}
+
+/**
  * assets could be loaded in a different order. To be save here,
  * they should be added to a map with url as key and be keySorted before joining together
  *
@@ -113,7 +145,7 @@ async function createHashFromCombinedFileString(matches) {
             combinedAssetsAsString += response.replace(/\s+/g, '')
         })
     })
-
+    loadedAssetLength = combinedAssetsAsString.length;
     return md5(combinedAssetsAsString);
 }
 
